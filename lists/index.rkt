@@ -38,33 +38,26 @@
         (define (list-cells what) (map (λ (r) (r what)) list-renderers))
     ]{
     @columns[12 #:center? #t #:row? #t]{
-      @p{This is the Racket mailing list server.  We have several public mailing
-       lists, some are listed below with several mirrors for each one.  The
-       complete list of public mailing lists is available on
-       @a[href: "listinfo"]{this page}.}}
+      @p{We have several public mailing lists.}}
     @(define gap1 (tr (map (λ (_) @td{@div[style: "height: 1ex;"]{}}) MLs)))
     @(define gap2 (tr (map (λ (_) @td{}) MLs)))
     @(define (sec . text)
        @list{@gap1
              @tr{@td[style: '("background-color: #dddddd; font-weight: bold;"
                               " padding: 0;")
-                     colspan: (length MLs)]{@text}}
+                     colspan: (add1 (length MLs))]{@text}}
              @gap2})
     @columns[12 #:center? #t #:row? #t]{
     @table[style: "width: 100%; margin: auto; text-align: center;"
            frame: 'box rules: 'cols cellpadding: 5]{
       @tr[style: "border-bottom: 1px solid; background-color: #ccccff;"]{
-        @(list-cells 'header-cell)}
-      @tr[valign: 'top style: "text-align: left;"]{@(list-cells 'description)}
-      @tr{@(list-cells 'main-page-cell)}
+        @td[] @(list-cells 'header-cell)}
+      @tr[valign: 'top style: "text-align: left;"]{@td[] @(list-cells 'description)}
+      @tr{@td[] @(list-cells 'main-page-cell)}
       @sec{Subscribe to a mailing list}
-      @tr{@(list-cells 'subscribe-cell)}
-      @sec{Gmane Mirror}
-      @tr{@(list-cells 'gmane-cell)}
+      @tr{@td[] @(list-cells 'subscribe-cell)}
       @sec{Archive at mail-archive.com}
-      @tr{@(list-cells 'mail-archive-cell)}
-      @sec{Google group mirror}
-      @tr{@(list-cells 'google-cell)}}}})
+      @tr{@td[] @(list-cells 'mail-archive-cell)}}}})
 
 ;; given a mailing list structure, produce a renderer that can produce
 ;; the required components on demand
@@ -82,7 +75,7 @@
     (let* ([path (if (pair? base) (list "/" (cdr base) "/") "/")]
            [base (if (pair? base) (car base) base)]
            [pfx (if (regexp-match? #rx"://" base) base (list "http://" base))])
-      @a[href: (list pfx ".gmane.org" path gmane)]{@body}))
+      @a[href: (list pfx ".gmane.io" path gmane)]{@body}))
   (define (mail-archive-link suffix . body)
     @a[href: (list "https://www.mail-archive.com/" email "/" suffix)]{@body})
   (define google-groups-url
@@ -92,7 +85,11 @@
     (and google-groups-url
          (append google-groups-url (list "join"))))
   (define google-groups-join-text
-    (string-append "Join the "name" mailing list"))
+    @span[style: "font-style: italic"]{With Google account: })
+  (define google-groups-join-link-text
+    (string-append "join the "name" mailing list"))
+  (define google-groups-join-no-account-text
+    @span{@span[style: "font-style: italic"]{Without Google account: }send email to @tt[name "+subscribe@googlegroups.com"]})
   (define ((mk-form make) url #:method [method 'get] . body)
     (make @form[action: url method: method
                 style: "display: inline; clear: none;"]{
@@ -107,7 +104,9 @@
                                     title: @list{Enter your email to subscribe
                                                  to the "@name" mailing list.}]}]
       [else ;; it must be a google group
-       @td{@a[href: google-groups-join-url]{@google-groups-join-text}}]))
+       @td{@div{@|google-groups-join-text|@a[href: google-groups-join-url]{@google-groups-join-link-text}}
+           @div{@nbsp}
+           @div[google-groups-join-no-account-text]}]))
   (define form-cell (mk-form td))
   (λ (what)
     (case what
@@ -133,6 +132,7 @@
                @bull
                @a[href: (list name "/archive/")]{old archive}}])]
       [(subscribe-cell) (mk-subscribe td)]
+      #;
       [(google-cell)
        (if google-groups-url
          @form-cell[(list google-groups-url "search")]{
@@ -154,6 +154,8 @@
          @br
          @span[style: "white-space: nowrap;"]{
            Search: @input[type: 'text name: 'q value: "" size: 20].}}]
+      ;; looks like gmane is pretty much gone...
+      #;
       [(gmane-cell)
        @form-cell["http://search.gmane.org/"]{
          @input[type: 'hidden name: 'group value: gmane]
